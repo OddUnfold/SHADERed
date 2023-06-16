@@ -18,7 +18,7 @@
 #include <thread>
 
 #define STATUSBAR_HEIGHT Settings::Instance().CalculateSize(32) + ImGui::GetStyle().FramePadding.y
-#define BUTTON_SIZE Settings::Instance().CalculateSize(20)
+#define BUTTON_SIZE 0.0f //Settings::Instance().CalculateSize(20)
 #define ICON_BUTTON_WIDTH Settings::Instance().CalculateSize(25)
 #define BUTTON_INDENT Settings::Instance().CalculateSize(5)
 #define FPS_UPDATE_RATE 0.3f
@@ -1070,8 +1070,8 @@ namespace ed {
 	{
 		bool isItemListVisible = width >= Settings::Instance().CalculateSize(675);
 		bool isZoomVisible = width >= Settings::Instance().CalculateSize(565);
-		bool isTimeVisible = width >= Settings::Instance().CalculateSize(445);
-		bool areControlsVisible = width >= Settings::Instance().CalculateSize(330);
+		bool isTimeVisible = width >= Settings::Instance().CalculateSize(470);
+		bool areControlsVisible = width >= Settings::Instance().CalculateSize(360);
 
 		int offset = (-100 * !isZoomVisible) + (-100 * !isTimeVisible);
 
@@ -1080,18 +1080,18 @@ namespace ed {
 		ImGui::Text("FPS: %.2f", FPS);
 
 		if (isTimeVisible) {
-			ImGui::SameLine(Settings::Instance().CalculateSize(120));
+			ImGui::SameLine(Settings::Instance().CalculateSize(90));
 			ImGui::Text("Time: %.2f", SystemVariableManager::Instance().GetTime());
 		}
 
 		if (isZoomVisible) {
-			ImGui::SameLine(Settings::Instance().CalculateSize(240));
+			ImGui::SameLine(Settings::Instance().CalculateSize(180));
 			ImGui::Text("Zoom: %d%%", (int)((1.0f / m_zoom.GetZoomSize().x) * 100.0f));
 		}
 
 		if (areControlsVisible) {
+			ImGui::SameLine(Settings::Instance().CalculateSize(275 + offset));
 			if (!m_data->Renderer.IsPaused()) {
-				ImGui::SameLine(Settings::Instance().CalculateSize(340 + offset));
 				if (m_pickMode == 0) ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 				if (ImGui::Button("P##pickModePos", ImVec2(BUTTON_SIZE, BUTTON_SIZE)) && m_pickMode != 0) {
 					m_pickMode = 0;
@@ -1114,43 +1114,40 @@ namespace ed {
 					m_gizmo.SetMode(m_pickMode);
 				} else if (m_pickMode == 2)
 					ImGui::PopStyleColor();
+			} else if (m_frameAnalyzed) {
+				ImGui::PushItemWidth(150.0f);
+				if (ImGui::BeginCombo("##fa_preview", getViewName(m_view))) {
+					// normal preview
+					if (ImGui::Selectable(getViewName(PreviewView::Normal)))
+						m_view = PreviewView::Normal;
+
+					// SPIRV-VM view
+					if (ImGui::Selectable(getViewName(PreviewView::Debugger)))
+						m_view = PreviewView::Debugger;
+
+					// opcode heatmap view
+					if (ImGui::Selectable(getViewName(PreviewView::Heatmap)))
+						m_view = PreviewView::Heatmap;
+
+					// undefined behavior map
+					if (ImGui::Selectable(getViewName(PreviewView::UndefinedBehavior)))
+						m_view = PreviewView::UndefinedBehavior;
+
+					// global breakpoints
+					if (m_data->Analysis.HasGlobalBreakpoints() && ImGui::Selectable(getViewName(PreviewView::GlobalBreakpoints)))
+						m_view = PreviewView::GlobalBreakpoints;
+
+					// variable value viewer
+					if (ImGui::Selectable(getViewName(PreviewView::VariableValue)))
+						m_view = PreviewView::VariableValue;
+
+					ImGui::EndCombo();
+				}
+				ImGui::PopItemWidth();
 			} else {
-				ImGui::SameLine(Settings::Instance().CalculateSize(340 + offset));
-				if (m_frameAnalyzed) {
-					ImGui::PushItemWidth(150.0f);
-					if (ImGui::BeginCombo("##fa_preview", getViewName(m_view))) {
-						// normal preview
-						if (ImGui::Selectable(getViewName(PreviewView::Normal)))
-							m_view = PreviewView::Normal;
-
-						// SPIRV-VM view
-						if (ImGui::Selectable(getViewName(PreviewView::Debugger)))
-							m_view = PreviewView::Debugger;
-
-						// opcode heatmap view
-						if (ImGui::Selectable(getViewName(PreviewView::Heatmap)))
-							m_view = PreviewView::Heatmap;
-
-						// undefined behavior map
-						if (ImGui::Selectable(getViewName(PreviewView::UndefinedBehavior)))
-							m_view = PreviewView::UndefinedBehavior;
-
-						// global breakpoints
-						if (m_data->Analysis.HasGlobalBreakpoints() && ImGui::Selectable(getViewName(PreviewView::GlobalBreakpoints)))
-							m_view = PreviewView::GlobalBreakpoints;
-
-						// variable value viewer
-						if (ImGui::Selectable(getViewName(PreviewView::VariableValue)))
-							m_view = PreviewView::VariableValue;
-
-						ImGui::EndCombo();
-					}
-					ImGui::PopItemWidth();
-				} else {
-					if (ImGui::Button("Analyze", ImVec2(150.0f, 0.0f))) {
-						ImGui::OpenPopup("Analyzer##analyzer");
-						m_buildBreakpointList();
-					}
+				if (ImGui::Button("Analyze", ImVec2(65.0f, 0.0f))) {
+					ImGui::OpenPopup("Analyzer##analyzer");
+					m_buildBreakpointList();
 				}
 			}
 		}
