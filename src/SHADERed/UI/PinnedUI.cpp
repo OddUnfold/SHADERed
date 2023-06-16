@@ -1,5 +1,6 @@
 #include <SHADERed/UI/CodeEditorUI.h>
 #include <SHADERed/UI/PinnedUI.h>
+#include <SHADERed/UI/Icons.h>
 #include <imgui/imgui.h>
 
 #include <SHADERed/Objects/Logger.h>
@@ -14,19 +15,16 @@ namespace ed {
 			ShaderVariable* var = m_pinnedVars[i];
 			ImGui::PushID(i);
 
-			m_editor.Open(var);
-			if (m_editor.Update())
-				m_data->Parser.ModifyProject();
-
-			ImGui::SetCursorPosX(ImGui::GetWindowWidth() / 2 - Settings::Instance().CalculateSize(25));
-			if (ImGui::Button("CLOSE", ImVec2(Settings::Instance().CalculateSize(50), 0))) {
+			if (ImGui::Button(UI_ICON_REMOVE, ImVec2(28, 0))) {
 				Remove(var->Name);
 				m_data->Parser.ModifyProject();
 			}
+			
+			ImGui::SameLine();
 
-			ImGui::NewLine();
-			ImGui::Separator();
-			ImGui::NewLine();
+			m_editor.Open(var);
+			if (m_editor.Update())
+				m_data->Parser.ModifyProject();
 
 			ImGui::PopID();
 		}
