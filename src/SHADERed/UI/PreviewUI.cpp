@@ -17,8 +17,8 @@
 #include <chrono>
 #include <thread>
 
-#define STATUSBAR_HEIGHT Settings::Instance().CalculateSize(32) + ImGui::GetStyle().FramePadding.y
-#define BUTTON_SIZE 0.0f //Settings::Instance().CalculateSize(20)
+#define STATUSBAR_HEIGHT Settings::Instance().CalculateSize(28) + ImGui::GetStyle().FramePadding.y
+#define BUTTON_SIZE Settings::Instance().CalculateSize(24)
 #define ICON_BUTTON_WIDTH Settings::Instance().CalculateSize(25)
 #define BUTTON_INDENT Settings::Instance().CalculateSize(5)
 #define FPS_UPDATE_RATE 0.3f
@@ -1068,15 +1068,16 @@ namespace ed {
 
 	void PreviewUI::m_renderStatusbar(float width, float height)
 	{
-		bool isItemListVisible = width >= Settings::Instance().CalculateSize(675);
-		bool isZoomVisible = width >= Settings::Instance().CalculateSize(565);
-		bool isTimeVisible = width >= Settings::Instance().CalculateSize(470);
-		bool areControlsVisible = width >= Settings::Instance().CalculateSize(360);
+		float spaceOffset = m_frameAnalyzed ? 90.0f : 0.0f;
+		bool isItemListVisible = width >= Settings::Instance().CalculateSize(675 + spaceOffset);
+		bool isZoomVisible = width >= Settings::Instance().CalculateSize(565 + spaceOffset);
+		bool isTimeVisible = width >= Settings::Instance().CalculateSize(470 + spaceOffset);
+		bool areControlsVisible = width >= Settings::Instance().CalculateSize(360 + spaceOffset);
 
 		int offset = (-100 * !isZoomVisible) + (-100 * !isTimeVisible);
 
 		float FPS = 1.0f / m_fpsDelta;
-		ImGui::Separator();
+		ImGui::AlignTextToFramePadding();
 		ImGui::Text("FPS: %.2f", FPS);
 
 		if (isTimeVisible) {
@@ -1093,7 +1094,7 @@ namespace ed {
 			ImGui::SameLine(Settings::Instance().CalculateSize(275 + offset));
 			if (!m_data->Renderer.IsPaused()) {
 				if (m_pickMode == 0) ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-				if (ImGui::Button("P##pickModePos", ImVec2(BUTTON_SIZE, BUTTON_SIZE)) && m_pickMode != 0) {
+				if (ImGui::Button("P##pickModePos", ImVec2(0, BUTTON_SIZE)) && m_pickMode != 0) {
 					m_pickMode = 0;
 					m_gizmo.SetMode(m_pickMode);
 				} else if (m_pickMode == 0)
@@ -1101,7 +1102,7 @@ namespace ed {
 
 				ImGui::SameLine();
 				if (m_pickMode == 1) ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-				if (ImGui::Button("S##pickModeScl", ImVec2(BUTTON_SIZE, BUTTON_SIZE)) && m_pickMode != 1) {
+				if (ImGui::Button("S##pickModeScl", ImVec2(0, BUTTON_SIZE)) && m_pickMode != 1) {
 					m_pickMode = 1;
 					m_gizmo.SetMode(m_pickMode);
 				} else if (m_pickMode == 1)
@@ -1109,7 +1110,7 @@ namespace ed {
 
 				ImGui::SameLine();
 				if (m_pickMode == 2) ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-				if (ImGui::Button("R##pickModeRot", ImVec2(BUTTON_SIZE, BUTTON_SIZE)) && m_pickMode != 2) {
+				if (ImGui::Button("R##pickModeRot", ImVec2(0, BUTTON_SIZE)) && m_pickMode != 2) {
 					m_pickMode = 2;
 					m_gizmo.SetMode(m_pickMode);
 				} else if (m_pickMode == 2)
@@ -1145,7 +1146,7 @@ namespace ed {
 				}
 				ImGui::PopItemWidth();
 			} else {
-				if (ImGui::Button("Analyze", ImVec2(65.0f, 0.0f))) {
+				if (ImGui::Button("Analyze", ImVec2(65.0f, BUTTON_SIZE))) {
 					ImGui::OpenPopup("Analyzer##analyzer");
 					m_buildBreakpointList();
 				}
@@ -1153,26 +1154,6 @@ namespace ed {
 		}
 
 		ImGui::SameLine();
-		if (m_picks.size() != 0 && isItemListVisible) {
-			ImGui::SameLine(0, Settings::Instance().CalculateSize(20));
-			ImGui::Text("Picked: ");
-
-			for (int i = 0; i < m_picks.size(); i++) {
-				ImGui::SameLine();
-
-				if (i != m_picks.size() - 1)
-					ImGui::Text("%s,", m_picks[i]->Name);
-				else
-					ImGui::Text("%s", m_picks[i]->Name);
-
-				if (i >= MAX_PICKED_ITEM_LIST_SIZE - 1) {
-					ImGui::SameLine();
-					ImGui::Text("...");
-					break;
-				}
-			}
-			ImGui::SameLine();
-		}
 
 		float controlsStartX = (width - ((ICON_BUTTON_WIDTH * 4) + (BUTTON_INDENT * 3))) / 2;
 		if (ImGui::GetCursorPosX() >= controlsStartX - 100)
@@ -1180,7 +1161,6 @@ namespace ed {
 		else
 			ImGui::SetCursorPosX(controlsStartX);
 
-		
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 
 		if (ImGui::Button(UI_ICON_PRESS, ImVec2(ICON_BUTTON_WIDTH, BUTTON_SIZE)) && m_data->Renderer.IsPaused()) {
@@ -1225,6 +1205,27 @@ namespace ed {
 
 			m_data->Renderer.Render(m_imgSize.x, m_imgSize.y);
 		}
+
+		if (m_picks.size() != 0 && isItemListVisible) {
+			ImGui::SameLine();
+			ImGui::Text("Picked:");
+
+			for (int i = 0; i < m_picks.size(); i++) {
+				ImGui::SameLine();
+
+				if (i != m_picks.size() - 1)
+					ImGui::Text("%s,", m_picks[i]->Name);
+				else
+					ImGui::Text("%s", m_picks[i]->Name);
+
+				if (i >= MAX_PICKED_ITEM_LIST_SIZE - 1) {
+					ImGui::SameLine();
+					ImGui::Text("...");
+					break;
+				}
+			}
+		}
+
 		ImGui::SameLine();
 
 		float zoomStartX = width - (ICON_BUTTON_WIDTH * 3) - BUTTON_INDENT * 3;
